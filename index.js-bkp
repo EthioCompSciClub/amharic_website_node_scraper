@@ -1,0 +1,127 @@
+const request = require('request');
+const cheerio = require('cheerio');
+const axios = require('axios');
+
+const url_one = 'https://www.zehabesha.com/';
+const url_two = 'https://www.zehabeshacom/';
+
+async function getHTML(url){
+    const instance = axios.create({
+        baseURL: url,
+        timeout: 1000,
+    })
+    try{
+        const {data: html} = await instance.get(url);
+        return html;
+    }catch(err){
+        return {error: "Error fetching"};
+    }
+}
+
+async function getLargeImage(article_link){
+    try{
+        var items = [];
+        var html_a = await getHTML(article_link);
+        var $ = cheerio.load(html_a);
+        var allItems = $('#container').children();
+        allItems.each(function(index){
+            var large_img_link = allItems.eq(index).find('p img').attr('src');
+            items.push({
+                large_img_link : large_img_link,
+            });
+        });
+        return {message: "success", items: items};
+    }catch(err){
+        return {message: "error cheerio failed."};
+    }
+}
+
+async function getData(html){
+    try{
+        var items = [];
+        var $ = cheerio.load(html);
+        var allItems = $('#belowfeatured').children();
+        allItems.each(function(index){
+            var article_title = allItems.eq(index).find('h2.posttitle a').attr('title');
+            var article_link = allItems.eq(index).find('h2.posttitle a').attr('href');
+            var small_img_link = allItems.eq(index).find('a img').attr('src');
+            var brief_desc = allItems.eq(index).find('p').eq(0).text();
+            var post_date = allItems.eq(index).find('p').eq(1).find('span.meta_date').text();
+            items.push({
+                article_title : article_title,
+                article_link : article_link,
+                small_img_link : small_img_link,
+                brief_desc : brief_desc,
+                post_date: post_date,
+            });
+        });
+        return items;
+    }catch(err){
+        return {message: "Error cheerio failed."};
+    }
+}
+
+
+
+
+
+async function go(){
+    var html =  await getHTML(url_one);
+    var items = await getData(html);
+    console.log(items[4]['article_link']);
+    var t = await getLargeImage(items[4]['article_link']);
+    console.log(t['items']);
+}
+
+go();
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // console.log("\n\n\n\n");
+        // console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
+        // console.log(items[3].html());
+        // console.log("\n\n");
+        // console.log('------------------------------------------++++++++++++++++++__________________________');
+        // console.log(items[3].children().html());
+        // console.log('************************************************************************************');
+        // console.log(items[3].children().eq(0).attr('class'));
+        // console.log("\n\n");
+        // console.log('************************************************************************************');
+        // console.log(items[3].children().eq(1).find('img').attr('src'));
+        // console.log(items.length);
+        // console.log("\n\n\n\n");
+
+        // request(url, function(err, response, html){
+        //     if(!err){
+        //         var $ = cheerio.load(html);
+        //         var allItems = $('#belowfeatured').children();
+                
+        //         allItems.each(function(index){
+        //             var article_title = allItems.eq(index).find('h2.posttitle a').attr('title');
+        //             var article_link = allItems.eq(index).find('h2.posttitle a').attr('href');
+        //             var small_img_link = allItems.eq(index).find('a img').attr('src');
+        //             var brief_desc = allItems.eq(index).find('p').eq(0).text();
+        //             var post_date = allItems.eq(index).find('p').eq(1).find('span.meta_date').text();
+        //             items.push({
+        //                 article_title : article_title,
+        //                 article_link : article_link,
+        //                 small_img_link : small_img_link,
+        //                 brief_desc : brief_desc,
+        //                 post_date: post_date,
+        //             });
+        //         });
+        //         console.log(items[2]);
+        //     }else{
+        //         console.log({message: 'ERROR encountered'});
+        //     }
+        // });
